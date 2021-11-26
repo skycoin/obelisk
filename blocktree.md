@@ -119,7 +119,9 @@ bt.AddBlock(b1)
 bt.AddBlock(b2)
 
 bt => {...
-    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#2>" ...}
+    Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...},
+    TotalBlocks: 2,
+    MaximumDepth: 2
 ...}
 
 ```
@@ -136,34 +138,75 @@ func (bt *BlockRecordTree) RemoveBlock(b *BlockRecord) string {
 let 
 
 bt => {...
-    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#2>" ...} -> { ... Hash : "<Sha256#3>" ...} 
+    Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
+    TotalBlocks: 3,
+    MaximumDepth: 3
 ...}
 
-b2 => { ... Hash : "<Sha256#2>" ...}
+b2 => { ... Hash : "<Sha256#2>", Depth: 2 ...}
 
 then
 
 bt.RemoveBlock(b2)
 
 bt => {...
-    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#3>" ...}
+    Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#3>", Depth: 2 ...}.
+    TotalBlocks: 2,
+    MaximumDepth: 2
 ...}
 
 ```
 
 ### GetBlockDepth
 - Returns the number of blocks between the given block and the root of the block tree
+#### Signature
 ```
 func (bt *BlockRecordTree) GetBlockDepth(b *BlockRecord) uint64 {
 }
 ```
+#### Sample Run
+```
+let 
+
+bt => {...
+    Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
+    TotalBlocks: 3,
+    MaximumDepth: 3
+...}
+
+b1 => { ... Hash : "<Sha256#1>", Depth: 1 ...}
+b2 => { ... Hash : "<Sha256#2>", Depth: 2 ...}
+b3 => { ... Hash : "<Sha256#3>", Depth: 3 ...}
+
+then
+
+bt.GetBlockDepth(b1) => 1
+bt.GetBlockDepth(b2) => 2
+bt.GetBlockDepth(b3) => 3
+
+```
+
 
 ### GetAllBlocks
-- Returns an list of all blocks from the root to the end of the tree. This function performs a *depth first traversal* of the whole tree returns the list of all blocks 
-  in the order they are found. 
+- Returns an list of all blocks from the root to the end of the tree. This function performs a *depth first traversal* of the whole tree returns the list of all blocks in the order they are found. 
+#### Signature
 ```
 func (bt *BlockRecordTree) GetAllBlocks() []*BlockRecord {
 }
+```
+#### Sample Run
+```
+let 
+
+bt => {...
+    Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
+    TotalBlocks: 3,
+    MaximumDepth: 3
+...}
+
+then
+
+bt.GetAllBlocks() => { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...}
 ```
 
 ### CheckIfUnspentOutputSpendable
@@ -187,5 +230,3 @@ func (bt *BlockRecordTree) CheckIfUnspentOutputSpendable(UnspentOutput cipher.SH
 func (bt *BlockRecordTree) CheckIfMultipleUnspentOutputSpendable(UnspentOutputs []cipher.SHA256, targetBlock *BlockRecord) bool {
 }
 ```
-
-
