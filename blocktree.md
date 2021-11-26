@@ -19,11 +19,11 @@ type BlockRecord struct {
 ```
 
 ### BlockRecordTree
-In order to use the library we will create a BlockRecordTree instance. Each blockRecord tree instance holds a tree of blocks and exposes various methods to interact with them. 
+In order to use the library we will create a BlockRecordTree instance. Each blockRecord tree instance holds a tree of blockRecords and exposes various methods to interact with them. 
 ```
 type BlockRecordTree struct {
     Root               *BlockRecord                         // Serves as the root of the blockRecord tree
-    TotalBlocks	       uint64				    // Total blocks in the tree
+    TotalBlockRecords	       uint64				    // Total blockRecords in the tree
     MaximumDepth       uint64				    // Maximum Depth of the tree
     TransactionsMap    map[cipher.SHA256]*Transactions      // Global TxId to *Transactions Map (Transactions struct is defined in [coin/Transactions.go]) 
 }
@@ -120,7 +120,7 @@ bt.AddBlock(b2)
 
 bt => {...
     Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...},
-    TotalBlocks: 2,
+    TotalBlockRecords: 2,
     MaximumDepth: 2
 ...}
 
@@ -139,7 +139,7 @@ let
 
 bt => {...
     Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
-    TotalBlocks: 3,
+    TotalBlockRecords: 3,
     MaximumDepth: 3
 ...}
 
@@ -151,14 +151,14 @@ bt.RemoveBlock(b2)
 
 bt => {...
     Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#3>", Depth: 2 ...}.
-    TotalBlocks: 2,
+    TotalBlockRecords: 2,
     MaximumDepth: 2
 ...}
 
 ```
 
 ### GetBlockDepth
-- Returns the number of blocks between the given blockRecord and the root of the blockRecord tree
+- Returns the number of blockRecords between the given blockRecord and the root of the blockRecord tree
 #### Signature
 ```
 func (bt *BlockRecordTree) GetBlockDepth(b *BlockRecord) uint64 {
@@ -170,7 +170,7 @@ let
 
 bt => {...
     Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
-    TotalBlocks: 3,
+    TotalBlockRecords: 3,
     MaximumDepth: 3
 ...}
 
@@ -187,11 +187,11 @@ bt.GetBlockDepth(b3) => 3
 ```
 
 
-### GetAllBlocks
-- Returns an list of all blocks from the root to the end of the tree. This function performs a *depth first traversal* of the whole tree returns the list of all blocks in the order they are found. 
+### GetAllBlockRecords
+- Returns an list of all blockRecords from the root to the end of the tree. This function performs a *depth first traversal* of the whole tree returns the list of all blockRecords in the order they are found. 
 #### Signature
 ```
-func (bt *BlockRecordTree) GetAllBlocks() []*BlockRecord {
+func (bt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {
 }
 ```
 #### Sample Run / Tests
@@ -200,13 +200,13 @@ let
 
 bt => {...
     Root : { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...},
-    TotalBlocks: 3,
+    TotalBlockRecords: 3,
     MaximumDepth: 3
 ...}
 
 then
 
-bt.GetAllBlocks() => { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...}
+bt.GetAllBlockRecords() => { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<Sha256#2>", Depth: 2 ...} -> { ... Hash : "<Sha256#3>", Depth: 3 ...}
 ```
 
 ### CheckIfUnspentOutputSpendable
@@ -231,7 +231,7 @@ b3 => { ... UxIdCreated : {"<Sha256#4>": []} ...}
 
 bt => {...
     Root : b1 -> b2 -> b3,
-    TotalBlocks: 3,
+    TotalBlockRecords: 3,
     MaximumDepth: 3
 ...}
 
@@ -273,7 +273,7 @@ b3 => { ... UxIdCreated : {"<Sha256#4>": []} ...}
 
 bt => {...
     Root : b1 -> b2 -> b3,
-    TotalBlocks: 3,
+    TotalBlockRecords: 3,
     MaximumDepth: 3
 ...}
 
