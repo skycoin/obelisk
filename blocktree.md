@@ -216,9 +216,41 @@ bt.GetAllBlocks() => { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<
   -> "Spent": The unspent output exists but was spent 
   -> "Available": The unspent output is available to spend on the given block
   
+#### Signature
 ```
 func (bt *BlockRecordTree) CheckIfUnspentOutputSpendable(UnspentOutput cipher.SHA256, targetBlock *BlockRecord) string {
 }
+```
+#### Sample Run
+```
+let 
+
+b1 => { ... UxIdCreated : {"<Sha256#1>": [], "<Sha256#2>": [] "<Sha256#3>": []} ...} 
+b2 => { ... UxIdSpent : {"<Sha256#3>": []},  ...} 
+b3 => { ... UxIdCreated : {"<Sha256#4>": []} ...}
+
+bt => {...
+    Root : b1 -> b2 -> b3,
+    TotalBlocks: 3,
+    MaximumDepth: 3
+...}
+
+then
+
+bt.CheckIfUnspentOutputSpendable("<Sha256#1>", b1) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#2>", b1) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#3>", b1) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#4>", b1) => "NeverExisted" 
+
+bt.CheckIfUnspentOutputSpendable("<Sha256#1>", b2) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#2>", b2) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#3>", b2) => "Spent" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#4>", b2) => "NeverExisted" 
+
+bt.CheckIfUnspentOutputSpendable("<Sha256#1>", b3) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#2>", b3) => "Available" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#3>", b3) => "Spent" 
+bt.CheckIfUnspentOutputSpendable("<Sha256#4>", b3) => "Available" 
 ```
 
 ### CheckIfMultipleUnspentOutputSpendable
@@ -226,7 +258,33 @@ func (bt *BlockRecordTree) CheckIfUnspentOutputSpendable(UnspentOutput cipher.SH
 - This function returns 
   -> true: If all the outputs are spendable at the given block 
   -> false: If anyone of the output is not spendable at the given block 
+#### Signature
 ```
 func (bt *BlockRecordTree) CheckIfMultipleUnspentOutputSpendable(UnspentOutputs []cipher.SHA256, targetBlock *BlockRecord) bool {
 }
+```
+#### Sample Run
+```
+let 
+
+b1 => { ... UxIdCreated : {"<Sha256#1>": [], "<Sha256#2>": [] "<Sha256#3>": []} ...} 
+b2 => { ... UxIdSpent : {"<Sha256#3>": []},  ...} 
+b3 => { ... UxIdCreated : {"<Sha256#4>": []} ...}
+
+bt => {...
+    Root : b1 -> b2 -> b3,
+    TotalBlocks: 3,
+    MaximumDepth: 3
+...}
+
+then
+
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>", "<Sha256#3>"], b1) => true 
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>", "<Sha256#3>", "<Sha256#4>"], b1) => false 
+
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>"], b2) => true 
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>", "<Sha256#3>"], b2) => false 
+
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>", "<Sha256#4>"], b3) => true 
+bt.CheckIfMultipleUnspentOutputSpendable(["<Sha256#1>", "<Sha256#2>", "<Sha256#3>", "<Sha256#4>"], b3) => false 
 ```
