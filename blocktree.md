@@ -53,21 +53,43 @@ type Transaction struct {
 func (b *BlockRecord) CheckIfUnspentOutputExistsInSpent(uxId cipher.SHA256) string {
 }
 ```
-#### Output
+#### Sample Run
 ```
+let 
+
 b => {...
-    UxIdSpent : {""}
+    UxIdSpent : {
+        "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4": [0xb1, 0xb2, 0xb3]}
 ...}
+
+then
+
+b.CheckIfUnspentOutputExistsInSpent("03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4")  => true
+b.CheckIfUnspentOutputExistsInSpent("xxxxxxxx")  => false
+
 ```
-
-
-
 
 ### CheckIfUnspentOutputExistsInCreated
 - Checks if an unspent output is created in a block
+#### Signature
 ```
 func (b *BlockRecord) CheckIfUnspentOutputExistsInCreated(uxId cipher.SHA256) string {
 }
+```
+#### Sample Run
+```
+let 
+
+b => {...
+    UxIdCreated : {
+        "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4": [0xb1, 0xb2, 0xb3]}
+...}
+
+then
+
+b.CheckIfUnspentOutputExistsInCreated("03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4")  => true
+b.CheckIfUnspentOutputExistsInCreated("xxxxxxxx")  => false
+
 ```
 
 
@@ -75,16 +97,58 @@ func (b *BlockRecord) CheckIfUnspentOutputExistsInCreated(uxId cipher.SHA256) st
 
 ### AddBlock
 - Adds a block to the block tree
+#### Signature
 ```
 func (bt *BlockRecordTree) AddBlock(b *BlockRecord) string {
 }
 ```
+#### Sample Run
+```
+let 
+
+bt => {...
+    Root : nil
+...}
+
+b1 => { ... Hash : "<Sha256#1>" ...}
+b2 => { ... Hash : "<Sha256#2>" ...}
+
+then
+
+bt.AddBlock(b1)
+bt.AddBlock(b2)
+
+bt => {...
+    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#2>" ...}
+...}
+
+```
 
 ### RemoveBlock
 - Remove a block from the tree and updates it's parents and children accordingly
+#### Signature
 ```
 func (bt *BlockRecordTree) RemoveBlock(b *BlockRecord) string {
 }
+```
+#### Sample Run
+```
+let 
+
+bt => {...
+    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#2>" ...} -> { ... Hash : "<Sha256#3>" ...} 
+...}
+
+b2 => { ... Hash : "<Sha256#2>" ...}
+
+then
+
+bt.RemoveBlock(b2)
+
+bt => {...
+    Root : { ... Hash : "<Sha256#1>" ...} -> { ... Hash : "<Sha256#3>" ...}
+...}
+
 ```
 
 ### GetBlockDepth
@@ -123,3 +187,5 @@ func (bt *BlockRecordTree) CheckIfUnspentOutputSpendable(UnspentOutput cipher.SH
 func (bt *BlockRecordTree) CheckIfMultipleUnspentOutputSpendable(UnspentOutputs []cipher.SHA256, targetBlock *BlockRecord) bool {
 }
 ```
+
+
