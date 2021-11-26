@@ -1,5 +1,5 @@
 # A Documentation
-A library to manage Blocks
+A library to manage Block Records
 
 ## Structs
 
@@ -8,7 +8,7 @@ A library to manage Blocks
 type BlockRecord struct {
     Hash            cipher.SHA256
     SequenceNo      unint64
-    Depth           unint64             // The depth will be the position at which this block is stored in tree.
+    Depth           unint64             // The depth will be the position at which this blockRecord is stored in tree.
     Parent          *BlockRecord
     Children        []*BlockRecord
     
@@ -19,10 +19,10 @@ type BlockRecord struct {
 ```
 
 ### BlockRecordTree
-In order to use the library we will create a BlockRecordTree instance. Each block tree instance holds a tree of blocks and exposes various methods to interact with them. 
+In order to use the library we will create a BlockRecordTree instance. Each blockRecord tree instance holds a tree of blocks and exposes various methods to interact with them. 
 ```
 type BlockRecordTree struct {
-    Root               *BlockRecord                         // Serves as the root of the block tree
+    Root               *BlockRecord                         // Serves as the root of the blockRecord tree
     TotalBlocks	       uint64				    // Total blocks in the tree
     MaximumDepth       uint64				    // Maximum Depth of the tree
     TransactionsMap    map[cipher.SHA256]*Transactions      // Global TxId to *Transactions Map (Transactions struct is defined in [coin/Transactions.go]) 
@@ -47,13 +47,13 @@ type Transaction struct {
 ## BlockRecord Routines
 
 ### CheckIfUnspentOutputExistsInSpent
-- Checks if an unspent output is spent in a block
+- Checks if an unspent output is spent in a blockRecord
 #### Signature
 ```
 func (b *BlockRecord) CheckIfUnspentOutputExistsInSpent(uxId cipher.SHA256) string {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -70,13 +70,13 @@ b.CheckIfUnspentOutputExistsInSpent("xxxxxxxx")  => false
 ```
 
 ### CheckIfUnspentOutputExistsInCreated
-- Checks if an unspent output is created in a block
+- Checks if an unspent output is created in a blockRecord
 #### Signature
 ```
 func (b *BlockRecord) CheckIfUnspentOutputExistsInCreated(uxId cipher.SHA256) string {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -96,13 +96,13 @@ b.CheckIfUnspentOutputExistsInCreated("xxxxxxxx")  => false
 ## BlockRecordTree Routines
 
 ### AddBlock
-- Adds a block to the block tree
+- Adds a blockRecord to the blockRecord tree
 #### Signature
 ```
 func (bt *BlockRecordTree) AddBlock(b *BlockRecord) string {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -127,13 +127,13 @@ bt => {...
 ```
 
 ### RemoveBlock
-- Remove a block from the tree and updates it's parents and children accordingly
+- Remove a blockRecord from the tree and updates it's parents and children accordingly
 #### Signature
 ```
 func (bt *BlockRecordTree) RemoveBlock(b *BlockRecord) string {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -158,13 +158,13 @@ bt => {...
 ```
 
 ### GetBlockDepth
-- Returns the number of blocks between the given block and the root of the block tree
+- Returns the number of blocks between the given blockRecord and the root of the blockRecord tree
 #### Signature
 ```
 func (bt *BlockRecordTree) GetBlockDepth(b *BlockRecord) uint64 {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -194,7 +194,7 @@ bt.GetBlockDepth(b3) => 3
 func (bt *BlockRecordTree) GetAllBlocks() []*BlockRecord {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -210,18 +210,18 @@ bt.GetAllBlocks() => { ... Hash : "<Sha256#1>", Depth: 1 ...} -> { ... Hash : "<
 ```
 
 ### CheckIfUnspentOutputSpendable
-- Traverses a tree from root to the given BlockRecord can check if the unspent out was destroyed on it's way from Root to the given block.
+- Traverses a tree from root to the given BlockRecord can check if the unspent out was destroyed on it's way from Root to the given blockRecord.
 - This function can *return* any of the following codes:
   -> "NeverExisted": The unspent output never existed 
   -> "Spent": The unspent output exists but was spent 
-  -> "Available": The unspent output is available to spend on the given block
+  -> "Available": The unspent output is available to spend on the given blockRecord
   
 #### Signature
 ```
 func (bt *BlockRecordTree) CheckIfUnspentOutputSpendable(UnspentOutput cipher.SHA256, targetBlock *BlockRecord) string {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
@@ -254,16 +254,16 @@ bt.CheckIfUnspentOutputSpendable("<Sha256#4>", b3) => "Available"
 ```
 
 ### CheckIfMultipleUnspentOutputSpendable
-- Traverses a tree from root to the given BlockRecord can check if all the outputs are spendable at the given block.
+- Traverses a tree from root to the given BlockRecord can check if all the outputs are spendable at the given blockRecord.
 - This function returns 
-  -> true: If all the outputs are spendable at the given block 
-  -> false: If anyone of the output is not spendable at the given block 
+  -> true: If all the outputs are spendable at the given blockRecord 
+  -> false: If anyone of the output is not spendable at the given blockRecord 
 #### Signature
 ```
 func (bt *BlockRecordTree) CheckIfMultipleUnspentOutputSpendable(UnspentOutputs []cipher.SHA256, targetBlock *BlockRecord) bool {
 }
 ```
-#### Sample Run
+#### Sample Run / Tests
 ```
 let 
 
