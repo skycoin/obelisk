@@ -23,8 +23,8 @@ In order to use the library we will create a BlockRecordTree instance. Each bloc
 ```
 type BlockRecordTree struct {
     Root               *BlockRecord                         // Serves as the root of the block tree
-    TotalBlocks	       uint64				    	        // Total blocks in the tree
-    MaximumDepth       uint64				    	        // Maximum Depth of the tree
+    TotalBlocks	       uint64				    // Total blocks in the tree
+    MaximumDepth       uint64				    // Maximum Depth of the tree
     TransactionsMap    map[cipher.SHA256]*Transactions      // Global TxId to *Transactions Map (Transactions struct is defined in [coin/Transactions.go]) 
 }
 ```
