@@ -179,6 +179,12 @@ The simulation will be run as a command line script
 ```console
 foo@bar:~$ go run obelisk-sim.go --nodes 3 --subscribers 2 --iterations 100 --seed 123
 ```
+### Simulation Flow
+- Print each node id along with public key
+- Print each node along with it's subscribers 
+- For the number of iterations provided:
+  - Based on the given seed, generate a random number in range (1, number of nodes)
+  - Get the corresponding node based on the index of the node at above generated random number and call node.UpdateState.
 ### Simulation Dry Run
 1- Print each node id along with public key
 ```console
