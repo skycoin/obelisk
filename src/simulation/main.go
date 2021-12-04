@@ -11,25 +11,29 @@ import (
 
 const DEFAULT_NODES = 3
 const DEFAULT_SUBSCRIBERS = 2
+const DEFAULT_ITERATIONS = 3
+const DEFAULT_BLOCK_TREE_BLOCK_RECORD_COUNT = 5
+const DEFAULT_BLOCK_TREE_CHILDREN_COUNT = 2
+
 const MIN_NODES = 3
 const MIN_SUBSCRIBERS = 1
-const DEFAULT_ITERATIONS = 3
 const MIN_ITERATIONS = 1
-const BLOCK_TREE_BLOCK_RECORD_COUNT = 5
-const BLOCK_TREE_CHILDREN_COUNT = 2
+const MIN_BLOCK_TREE_BLOCK_RECORD_COUNT = 3
+const MIN_BLOCK_TREE_CHILDREN_COUNT = 2
 
 func main() {
 
-	showHelp := flag.Bool("help", false, "Show Help")
-
 	// Required Arguments
 	nodeCount := flag.Int("nodes", DEFAULT_NODES, fmt.Sprintf("[Required] Number of nodes to consider for simulation. Min Value: %d", MIN_NODES))
-	subscriberCount := flag.Int("subcribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than nodes. Min Value: %d", MIN_SUBSCRIBERS))
+	subscriberCount := flag.Int("subcribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than number of nodes. Min Value: %d", MIN_SUBSCRIBERS))
 
 	// Optional Arguments
+	showHelp := flag.Bool("help", false, "Show Help")
 	verboseMode := flag.Bool("verbose", false, "Run in Verbose Mode")
 	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "Seed to use while running the simulation. Must be a valid integer > 0")
 	iterations := flag.Int("iterations", DEFAULT_ITERATIONS, fmt.Sprintf("Number of iterations to run this simulation. Min Value: %d", MIN_ITERATIONS))
+	blockRecordCount := flag.Int("block-record-count", DEFAULT_BLOCK_TREE_BLOCK_RECORD_COUNT, fmt.Sprintf("Total Number of Blocks in Root Block Tree. Min Value: %d", MIN_BLOCK_TREE_BLOCK_RECORD_COUNT))
+	childrenPerBlock := flag.Int("children-per-block", DEFAULT_BLOCK_TREE_CHILDREN_COUNT, fmt.Sprintf("Max Number of Children Per Block in Root Block Tree. Min Value: %d", MIN_BLOCK_TREE_CHILDREN_COUNT))
 
 	flag.Parse()
 
@@ -56,9 +60,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *blockRecordCount < MIN_BLOCK_TREE_BLOCK_RECORD_COUNT {
+		log.Printf("Invalid Value for blockRecordCount: %d (Must be a valid integer with minimum value: %d)", *blockRecordCount, MIN_BLOCK_TREE_BLOCK_RECORD_COUNT)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if *childrenPerBlock < MIN_BLOCK_TREE_CHILDREN_COUNT || *childrenPerBlock >= *blockRecordCount {
+		log.Printf("Invalid Value for childrenPerBlock: %d (Must be a valid integer with minimum value: %d and must be less than %d)", *childrenPerBlock, MIN_BLOCK_TREE_CHILDREN_COUNT, *blockRecordCount)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	rand.Seed(*seed)
 
 	simulation := GetSimulation()
-	simulation.InitSimulation(BLOCK_TREE_BLOCK_RECORD_COUNT, BLOCK_TREE_CHILDREN_COUNT, *nodeCount, *subscriberCount, *iterations, *verboseMode)
+	simulation.InitSimulation(*blockRecordCount, *childrenPerBlock, *nodeCount, *subscriberCount, *iterations, *verboseMode)
 	simulation.RunSimulation()
 }
