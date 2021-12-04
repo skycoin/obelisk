@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 const DEFAULT_NODES = 3
@@ -26,7 +27,8 @@ func main() {
 	subscriberCount := flag.Int("subcribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than nodes. Min Value: %d", MIN_SUBSCRIBERS))
 
 	// Optional Arguments
-	seed := flag.Int64("seed", 0, "Seed to use while running the simulation. Must be a valid integer > 0")
+	verboseMode := flag.Bool("verbose", false, "Run in Verbose Mode")
+	seed := flag.Int64("seed", time.Now().UTC().UnixNano(), "Seed to use while running the simulation. Must be a valid integer > 0")
 	iterations := flag.Int("iterations", DEFAULT_ITERATIONS, fmt.Sprintf("Number of iterations to run this simulation. Min Value: %d", MIN_ITERATIONS))
 
 	flag.Parse()
@@ -36,11 +38,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// if flag.NFlag() < 2 {
-	// 	fmt.Printf("\nNot enough arguments!!\n\n")
-	// 	flag.PrintDefaults()
-	// 	os.Exit(1)
-	// }
+	if flag.NFlag() < 2 {
+		fmt.Printf("\nNot enough arguments!!\n\n")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
 	if *nodeCount < MIN_NODES {
 		log.Printf("Invalid Value for nodes: %d (Must be a valid integer with minimum value: %d)", *nodeCount, MIN_NODES)
@@ -54,11 +56,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *seed == 0 {
-		*seed = rand.Int63n(10000)
-	}
+	rand.Seed(*seed)
 
 	simulation := GetSimulation()
-	simulation.InitSimulation(BLOCK_TREE_BLOCK_RECORD_COUNT, BLOCK_TREE_CHILDREN_COUNT, *nodeCount, *subscriberCount, *seed, *iterations)
+	simulation.InitSimulation(BLOCK_TREE_BLOCK_RECORD_COUNT, BLOCK_TREE_CHILDREN_COUNT, *nodeCount, *subscriberCount, *iterations, *verboseMode)
 	simulation.RunSimulation()
 }

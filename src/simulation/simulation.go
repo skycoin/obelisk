@@ -1,16 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
-
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 type Simulation struct {
-	Seed          int64
+	VerboseMode   bool
 	Iterations    int
 	Ticks         int
-	Nodes         map[cipher.PubKey]*Node
+	Nodes         []*Node
 	RootBlockTree *BlockRecordTree
 }
 
@@ -18,37 +17,32 @@ var simulation *Simulation
 
 func GetSimulation() *Simulation {
 	if simulation == nil {
-		simulation = &Simulation{Nodes: map[cipher.PubKey]*Node{}}
+		simulation = &Simulation{}
 	}
 	return simulation
 }
 
 func (sim *Simulation) InitSimulation(totalRootBlockTreeNodes int, totalRootBlockTreeChildrenPerNode int, numberOfNodes int,
-	numberOfSubscribers int, seed int64, iterations int) error {
+	numberOfSubscribers int, iterations int, verboseMode bool) error {
 	if rootBlockTree, err := NewRandomBlockRecordTree(totalRootBlockTreeNodes, totalRootBlockTreeChildrenPerNode); err != nil {
 		return err
 	} else {
 		sim.RootBlockTree = rootBlockTree
 	}
 
-	sim.Nodes = map[cipher.PubKey]*Node{}
-	nodes := []*Node{}
-	var i int
-	for i < numberOfNodes {
-
-		node := NewRandomNode()
-		sim.Nodes[node.pubKey] = node
-		nodes = append(nodes, node)
-		i++
+	sim.Nodes = []*Node{}
+	for i := 0; i < numberOfNodes; i++ {
+		node := NewRandomNode(i + 1)
+		sim.Nodes = append(sim.Nodes, node)
 	}
 
 	for _, node := range sim.Nodes {
-		node.InitializeNode(sim.RootBlockTree, nodes, numberOfSubscribers, seed)
+		node.InitializeNode(sim.RootBlockTree, sim.Nodes, numberOfSubscribers)
 	}
 
-	sim.Seed = seed
 	sim.Ticks = 0
 	sim.Iterations = iterations
+	sim.VerboseMode = verboseMode
 
 	return nil
 }
@@ -59,22 +53,41 @@ func (sim *Simulation) AdvanceTicks() {
 
 func (sim *Simulation) RunSimulation() {
 
-	rand.Seed(sim.Seed)
+	// Printing before simulation
+	fmt.Printf("\n\n\n#begin Simulation Initial State:\n")
+	sim.PrintAllNodes()
+	fmt.Printf("\n#end Simulation Initial State\n")
 
-	nodeArray := []*Node{}
-	for _, node := range sim.Nodes {
-		nodeArray = append(nodeArray, node)
-	}
+	for it := 0; it < sim.Iterations; it++ {
 
-	var it int = 0
-	for it < sim.Iterations {
-		nodeArray[rand.Intn(len(sim.Nodes))].UpdateNodeState()
-		it++
+		node := sim.Nodes[rand.Intn(len(sim.Nodes))]
+
+		if sim.VerboseMode {
+			fmt.Printf("\n\n\nIteration No. %d", (it + 1))
+			fmt.Printf("\n\nBefore Update:\n")
+			node.PrintNodeDetails()
+		}
+
+		node.UpdateNodeState()
+
+		if sim.VerboseMode {
+			fmt.Printf("\n\nAfter Update:\n")
+			node.PrintNodeDetails()
+		}
 	}
 
 	sim.Ticks++
+
+	// Printing after simulation
+	fmt.Printf("\n\n\n#begin Simulation Final State:\n")
+	sim.PrintAllNodes()
+	fmt.Printf("\n#end Simulation Final State\n")
 }
 
-func (sim *Simulation) PrintTotalState() {
-	// Print Total State logic
+func (sim *Simulation) PrintAllNodes() {
+
+	for _, node := range sim.Nodes {
+		fmt.Printf("\n")
+		node.PrintNodeDetails()
+	}
 }

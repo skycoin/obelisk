@@ -54,7 +54,7 @@ func NewRandomBlockRecordTree(totalBlocks int, childrenPerNode int) (*BlockRecor
 
 		br := NewRandomBlockRecord()
 
-		if int(len(currentRoot.children)) < childrenPerNode {
+		if len(currentRoot.children) < childrenPerNode {
 			br.parent = currentRoot
 			br.seqNo = br.parent.seqNo + 1
 			currentRoot.children = append(currentRoot.children, br)
