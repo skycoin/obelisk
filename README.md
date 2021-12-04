@@ -43,14 +43,8 @@ This Script performs a simulation of the obelisk consensus algorithm.
       - [Signature](#signature-13)
 - [Struct NodeBlockMeta](#struct-nodeblockmeta)
   * [Data](#data-4)
-  * [Methods](#methods-3)
-    + [VerifyNodeBlockMeta](#verifynodeblockmeta)
-      - [Signature](#signature-14)
 - [Overall Flow](#overall-flow)
 - [Dry Run](#dry-run) 
-    - [Iteration 1 (Update State Called on N1)](#iteration-1--update-state-called-on-n1-)
-    - [Iteration 2 (Update State Called on N2)](#iteration-2--update-state-called-on-n2-)
-    - [Iteration 3 (Update State Called on N3)](#iteration-3--update-state-called-on-n3-)
 - [How to build / run?](#how-to-build---run-)
   * [Sample Run](#sample-run)
   * [Sample Output](#sample-output)
@@ -222,15 +216,6 @@ struct NodeBlockMeta {
     seqNo         uint64              // Here we maintain the highest seqNo among the nodes considered while syncing the states  
     ticks         uint64              // capture the ticks from the global simulation at the time when the NodeBlockMeta was synced
     weight        float              // weight of NodeBlockMeta. This weight will be sum of the weight of the children of the blockRecord  
-}
-```
-### Methods
-Following are the methods supported by the NodeBlockMeta Struct required for this simulation
-#### VerifyNodeBlockMeta
-- For the given block verify that it's weight is equal to the sum of the weights of the children
-##### Signature
-```
-func (n *NodeBlockMeta) VerifyNodeBlockMeta() {
 }
 ```
 ## Overall Flow
