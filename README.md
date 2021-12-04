@@ -32,7 +32,7 @@ This Script performs a simulation of the obelisk consensus algorithm.
       - [Signature](#signature-10)
 - [Struct BlockRecord](#struct-blockrecord)
   * [Data](#data-2)
-- [struct Node](#struct-node)
+- [Struct Node](#struct-node)
   * [Data](#data-3)
   * [Methods](#methods-2)
     + [InitializeNode](#initializenode)
@@ -41,7 +41,7 @@ This Script performs a simulation of the obelisk consensus algorithm.
       - [Signature](#signature-12)
     + [UpdateNodeState](#updatenodestate)
       - [Signature](#signature-13)
-- [struct NodeBlockMeta](#struct-nodeblockmeta)
+- [Struct NodeBlockMeta](#struct-nodeblockmeta)
   * [Data](#data-4)
   * [Methods](#methods-3)
     + [VerifyNodeBlockMeta](#verifynodeblockmeta)
@@ -169,7 +169,7 @@ type BlockRecord struct {
 	children []*BlockRecord // List of children of the block record
 }
 ```
-## struct Node
+## Struct Node
 The Node struct holds the Node information for the running simulation
 ### Data
 ```
@@ -213,7 +213,7 @@ Updates the current node's state:
 func (n *Node) UpdateNodeState() {
 }
 ```
-## struct NodeBlockMeta
+## Struct NodeBlockMeta
 The NodeBlockMeta struct holds each node's individual copy of block record details.
 ### Data
 ```
