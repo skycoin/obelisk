@@ -2,92 +2,121 @@
 This Script performs a simulation of the obelisk consensus algorithm.
 
 - [Global Public Methods](#global-public-methods)
-    + [GetRandomPublicKey](#getrandompublickey)
+    + [GetRandomPubKey](#getrandompubkey)
       - [Signature](#signature)
-    + [GetRandomBlockHash](#getrandomblockhash)
+    + [GetRandomSHA256](#getrandomsha256)
       - [Signature](#signature-1)
     + [GetSimulation](#getsimulation)
       - [Signature](#signature-2)
-    + [InitSimulation](#initsimulation)
+    + [GenerateRandomBlockTree](#generaterandomblocktree)
       - [Signature](#signature-3)
+    + [NewRandomBlockRecord](#newrandomblockrecord)
+      - [Signature](#signature-4)
+    + [NewRandomNode](#newrandomnode)
+      - [Signature](#signature-5)
+    + [NewNodeStateBlockMeta](#newnodestateblockmeta)
+      - [Signature](#signature-6)
 - [Struct Simulation](#struct-simulation)
   * [Data](#data)
   * [Methods](#methods)
     + [AdvanceTicks](#advanceticks)
-      - [Signature](#signature-4)
-    + [PrintTotalState](#printtotalstate)
-      - [Signature](#signature-5)
-    + [GenerateRandomBlockTree](#generaterandomblocktree)
-      - [Signature](#signature-6)
-- [Struct BlockRecord](#struct-blockrecord)
+      - [Signature](#signature-7)
+    + [InitSimulation](#initsimulation)
+      - [Signature](#signature-8)
+    + [PrintAllNodes](#printallnodes)
+      - [Signature](#signature-9)
+- [Struct BlockRecordTree](#struct-blockrecordtree)
   * [Data](#data-1)
   * [Methods](#methods-1)
-    + [InitializeRandomBlock](#initializerandomblock)
-      - [Signature](#signature-7)
-- [struct Node](#struct-node)
-  * [Data](#data-2)
-  * [Methods](#methods-2)
-    + [IntroduceBlock](#introduceblock)
-      - [Signature](#signature-8)
-    + [InitializeNodeState](#initializenodestate)
-      - [Signature](#signature-9)
-    + [ValidateNodeState](#validatenodestate)
+    + [GetAllBlockRecords](#getallblockrecords)
       - [Signature](#signature-10)
-    + [UpdateNodeState](#updatenodestate)
-      - [Signature](#signature-11)
-- [struct NodeBlockMeta](#struct-nodeblockmeta)
+- [Struct BlockRecord](#struct-blockrecord)
+  * [Data](#data-2)
+- [struct Node](#struct-node)
   * [Data](#data-3)
+  * [Methods](#methods-2)
+    + [InitializeNode](#initializenode)
+      - [Signature](#signature-11)
+    + [ValidateNodeState](#validatenodestate)
+      - [Signature](#signature-12)
+    + [UpdateNodeState](#updatenodestate)
+      - [Signature](#signature-13)
+- [struct NodeBlockMeta](#struct-nodeblockmeta)
+  * [Data](#data-4)
   * [Methods](#methods-3)
     + [VerifyNodeBlockMeta](#verifynodeblockmeta)
-      - [Signature](#signature-12)
-- [Simulation Run](#simulation-run)
-  * [Sample Run](#sample-run)
-  * [Simulation Flow](#simulation-flow)
-  * [Simulation Dry Run](#simulation-dry-run)
+      - [Signature](#signature-14)
+- [Overall Flow](#overall-flow)
+- [Dry Run](#dry-run)
       - [Iteration 1 (Update State Called on N1)](#iteration-1--update-state-called-on-n1-)
       - [Iteration 2 (Update State Called on N2)](#iteration-2--update-state-called-on-n2-)
       - [Iteration 3 (Update State Called on N3)](#iteration-3--update-state-called-on-n3-)
+- [How to build / run?](#how-to-build---run-)
+  * [Sample Run](#sample-run)
+  * [Sample Output](#sample-output)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 ## Global Public Methods
 Following are the public methods that will be used by the cmd script
-#### GetRandomPublicKey
-Generates a random cipher.PublicKey using src/cipher library. Like // src.NewPubKey(src.RandBytes(33))
+#### GetRandomPubKey
+Generates a random cipher.PubKey.
 ##### Signature
 ```
-func GetRandomPublicKey() cipher.PublicKey {
-
-}
+func GetRandomPubKey() cipher.PubKey
 ```
-#### GetRandomBlockHash
+#### GetRandomSHA256
 Generates a random sha256 hash. It Basically generates a random number and then perform sha256 hash on it. 
 ##### Signature
 ```
-func GetRandomBlockHash() cipher.SHA256 {
-}
+func GetRandomSHA256() cipher.SHA256
 ```
 #### GetSimulation
 This method returns the globally active singleton simulation object
 ##### Signature
 ```
-func GetSimulation() *Simulation {
-}
+func GetSimulation() *Simulation
 ```
-#### InitSimulation
-This method initializes the global simulation object based on command line arguments
+#### GenerateRandomBlockTree
+This method recursively generates a random block tree for a given number of nodes and a given number of children of each node. 
+- It will traverse the tree in the breadth first search manner and will keep adding blocks until totalBlocks is reached. 
+- To Add a new block. It create a BlockRecord struct, use InitializeRandomBlock to generate BlockRecord with pre-initialized Hash and Parent Node set
 ##### Signature
 ```
-func InitSimulation(sim *Simulation, numberOfNodes int, numberOfSubscribers int, seed int64) {
-}
+func NewRandomBlockRecordTree(totalBlocks int, childrenPerNode int) (*BlockRecordTree, error) {}
+```
+
+#### NewRandomBlockRecord
+Creates a block record object based on random Hash Value. It basically
+1- Generates a random hash (cipher.SHA256) using GetRandomBlockHash and assigned it to b.Hash
+2- and sets: b.seqNo = 0 | b.Parent = parent (parameter) | b.Children = []*BlockRecord{}  
+##### Signature
+```
+func NewRandomBlockRecord() *BlockRecord {}
+```
+#### NewRandomNode
+Creates a random node object with given id and initializes it with a random public key
+##### Signature
+```
+func NewRandomNode(id int) *Node {}
+```
+#### NewNodeStateBlockMeta
+Creates a random node block meta with a given block record
+##### Signature
+```
+func NewNodeStateBlockMeta(blockRecord *BlockRecord) *NodeStateBlockMeta {}
 ```
 
 ## Struct Simulation
 The Simulation struct will hold all the data required for the running instance of the obelisk simulation. This struct will be maintained as singleton
 ### Data
 ```
-struct Simulation {
-    Ticks uint64                        // Running ticks of the application
-    Nodes map[cipher.PublicKey]*Node       // Node Public key to Node structure map
-    Root  *BlockRecord                  // BlockRecord hierarchy of the block records in the application
+type Simulation struct {
+	VerboseMode   bool                    // Simulation Running in Verbose Mode
+	Iterations    int                     // Number of Iterations to run the simulation
+	Ticks         int                     // Number of Simulation Ticks
+	Nodes         []*Node                 // Nodes in Simulation
+	RootBlockTree *BlockRecordTree        // Root Block Tree for Simulation
 }
 ```
 ### Methods
@@ -96,87 +125,75 @@ Following are the methods supported by the Simulation Struct
 This method simply increments ticks held by the running simulation application. It tracks the total number of updates done on any of the nodes.
 ##### Signature
 ```
-func (sim *Simulation) AdvanceTicks() {
-}
+func (sim *Simulation) AdvanceTicks() {}
 ```
 
-#### PrintTotalState
-This method prints the state of each of the nodes as csv
+#### InitSimulation
+This method initializes the global simulation object based on command line arguments
 ##### Signature
 ```
-func (sim *Simulation) PrintTotalState() {
-}
+func (sim *Simulation) InitSimulation(totalRootBlockTreeNodes int, totalRootBlockTreeChildrenPerNode int, numberOfNodes int, numberOfSubscribers int, iterations int, verboseMode bool) {}
 ```
 
-#### GenerateRandomBlockTree
-This method recursively generates a random block tree for a given number of nodes and a given number of children of each node. 
-- It will traverse the tree in the breadth first search manner and will keep adding blocks until totalBlocks is reached. 
-- To Add a new block. It create a BlockRecord struct, use InitializeRandomBlock to generate BlockRecord with pre-initialized Hash and Parent Node set
+#### PrintAllNodes
+Print all nodes along with their states as csv
 ##### Signature
 ```
-func (sim *Simulation) GenerateRandomBlockTree(seqNo uint64, totalBlocks int64, childrenPerNode int64) *BlockRecord {
-}
+func (sim *Simulation) PrintAllNodes() {}
 ```
-
-## Struct BlockRecord
-The BlockRecord struct will hold data to simulate a Block
+## Struct BlockRecordTree
+The BlockRecordTree struct will hold data for the root block tree
 ### Data
 ```
-struct BlockRecord {
-    Hash            cipher.SHA256       // Hash of the Block
-    SeqNo           uint64              // SeqNo of the block
-    Parent          *BlockRecord        // Pointer to the parent of the block record
-    Children        []*BlockRecord      // List of children of the block record
+type BlockRecordTree struct {
+	Root *BlockRecord           // Root node of the Block Record Tree
 }
 ```
 ### Methods
-Following are the methods supported by the BlockRecord Struct required for this simulation
-#### InitializeRandomBlock
-Initializes a block based on random Hash Value. It basically
-1- Generates a random hash (cipher.SHA256) using GetRandomBlockHash and assigned it to b.Hash
-2- and sets: b.seqNo = 0 | b.Parent = parent (parameter) | b.Children = []*BlockRecord{}  
+Following are the methods supported by the BlockRecordTree Struct required for this simulation
+#### GetAllBlockRecords
+Returns all blocks of the root block tree as a list
 ##### Signature
 ```
-func (b *BlockRecord) InitializeRandomBlock(parent *BlockRecord) {
-}
+func (brt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {}
 ```
 
+## Struct BlockRecord
+The BlockRecord struct will hold data to simulate a Block Record
+### Data
+```
+type BlockRecord struct {
+	hash     cipher.SHA256  // Hash of the Block
+	seqNo    int            // SeqNo of the block
+	parent   *BlockRecord   // Pointer to the parent of the block record
+	children []*BlockRecord // List of children of the block record
+}
+```
 ## struct Node
 The Node struct holds the Node information for the running simulation
 ### Data
 ```
-struct Node {
-    subscriptions []*Node                                // List of Nodes subscribed by the current Node
-    state         map[cipher.SHA256]*NodeBlockMeta       // A mapping from BlockRecord Hash to current Node's separate copy of NodeBlockMeta
-    seqNo         uint64                                 // Node's sequence number tracking the number of updates done on the node
+type Node struct {
+	id            int                                   // id of the node
+	pubKey        cipher.PubKey                         // Node's public key
+	seqNo         int                                   // Node's sequence number tracking the number of updates done on the node
+	subscriptions []*Node                               // List of Nodes subscribed by the current Node
+	state         map[cipher.SHA256]*NodeStateBlockMeta // A mapping from BlockRecord Hash to current Node's separate copy of NodeStateBlockMeta
 }
 ```
 ### Methods
 Following are the methods supported by the Node Struct required for this simulation
-#### IntroduceBlock
-- Given a block record. Add a new entry in state with key being the block record hash and value being a new NodeBlockMeta object
-- Set the sequence number && ticks to 0 for NodeBlockMeta 
-
-##### Signature
-```
-func (n *Node) IntroduceBlock(b *blockRecord) {
-}
-```
-
-#### InitializeNodeState
+#### InitializeNode
 Initializes the current node's state:
 - Iterate through the global block record tree held by Simulation struct 
-- Foreach of the block record call n.IntroduceBlock and then initialize the weight = (weight of parent) / (number of children of parent)
+- Foreach of the block record adds it to the state and then initialize the weight = (weight of parent) / (number of children of parent)
+- Adds number of subscribers to the node in a random fashion driven by seed
 ##### Signature
 ```
-func (n *Node) InitializeNodeState() {
-}
+func (n *Node) InitializeNode(brt *BlockRecordTree, nodes []*Node, numberOfSubscribers int) {}
 ```
-
-
 #### ValidateNodeState
-  - For NodeBlockMeta entry in current node's state:
-  - Call VerifyNodeBlockMeta 
+For NodeBlockMeta entry in current node's state, verifies that it's weight is equal to that sum of the weights of it's children
 ##### Signature
 ```
 func (n *Node) ValidateNodeState() {
@@ -211,28 +228,19 @@ struct NodeBlockMeta {
 Following are the methods supported by the NodeBlockMeta Struct required for this simulation
 #### VerifyNodeBlockMeta
 - For the given block verify that it's weight is equal to the sum of the weights of the children
-
 ##### Signature
 ```
 func (n *NodeBlockMeta) VerifyNodeBlockMeta() {
 }
 ```
-
-
-## Simulation Run 
-The simulation will be run as a command line script
-
-### Sample Run
-```console
-foo@bar:~$ go run obelisk-sim.go --nodes 3 --subscribers 2 --iterations 100 --seed 123
-```
-### Simulation Flow
+## Overall Flow
 - Print each node id along with public key
 - Print each node along with it's subscribers 
 - For the number of iterations provided:
   - Based on the given seed, generate a random number in range (1, number of nodes)
   - Get the corresponding node based on the index of the node at above generated random number and call node.UpdateState.
-### Simulation Dry Run
+
+## Dry Run
 1- Print each node id along with public key
 ```console
 N1 => 1, <PK-Node1>
@@ -320,4 +328,75 @@ simulation.ticks = 3
 (seq=1) N1 => {b1, 0, 1, 1} => [ {b2, 0, 1, 0.5} {b2, 0, 1, 0.5} ]
 (seq=1) N2 => {b1, 1, 2, 1} => [ {b2, 1, 2, 0.5} {b2, 1, 2, 0.5} ]
 (seq=1) N3 => {b1, 1, 3, 1} => [ {b2, 1, 3, 0.5} {b2, 1, 3, 0.5} ]
+```
+
+
+
+## How to build / run?  
+The simulation will be run as a command line script
+### Sample Run
+```console
+<dir-Path>/obelisk$ go build ./src/simulation
+<dir-Path>/obelisk$ ./simulation -block-record-count 3 -children-per-block 2 -nodes 3 -subcribers 2 -iterations 3
+```
+### Sample Output
+```console
+#begin Simulation Initial State:
+
+Node (id=1 seqNo=0) Details:
+PubKey:[99 28 6 57 118 66 130 91 33 120 8 13 36 119 99 53 39 202 89 25 80 135 60 232 127 205 220 48 159 146 139 159 119]
+Subscriptions:[3 2]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+
+Node (id=2 seqNo=0) Details:
+PubKey:[11 168 224 164 204 98 186 59 108 210 16 162 191 131 190 107 122 237 207 26 121 19 208 83 81 99 119 98 53 133 236 196 245]
+Subscriptions:[1 3]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+
+Node (id=3 seqNo=0) Details:
+PubKey:[27 177 143 53 69 168 30 4 171 105 177 0 207 240 6 16 222 218 201 149 180 188 23 185 107 108 45 99 174 3 144 225 12]
+Subscriptions:[1 2]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+
+#end Simulation Initial State
+
+
+
+#begin Simulation Final State:
+
+Node (id=1 seqNo=0) Details:
+PubKey:[99 28 6 57 118 66 130 91 33 120 8 13 36 119 99 53 39 202 89 25 80 135 60 232 127 205 220 48 159 146 139 159 119]
+Subscriptions:[3 2]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+
+Node (id=2 seqNo=0) Details:
+PubKey:[11 168 224 164 204 98 186 59 108 210 16 162 191 131 190 107 122 237 207 26 121 19 208 83 81 99 119 98 53 133 236 196 245]
+Subscriptions:[1 3]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 0 | 0.50
+
+Node (id=3 seqNo=3) Details:
+PubKey:[27 177 143 53 69 168 30 4 171 105 177 0 207 240 6 16 222 218 201 149 180 188 23 185 107 108 45 99 174 3 144 225 12]
+Subscriptions:[1 2]
+State [Format: blockHash | parentHash | seqNo | ticks | weight]:
+fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 3 | 1.00
+27e5dab3b18a144bda1c5339666f93935cd2063f8e82cbec30d427155c312d8e | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 3 | 0.50
+ecb526fb4a415c078ace728a17e67139bdf5f61ab277ac4ee0ae8f078d8838f8 | fce242b1ca443465e8b0a2e4af35d8af69a3cb2cbff63f332392ab84c989a4f9 | 0 | 3 | 0.50
+
+#end Simulation Final State
+
 ```

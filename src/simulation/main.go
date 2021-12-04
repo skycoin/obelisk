@@ -76,5 +76,9 @@ func main() {
 
 	simulation := GetSimulation()
 	simulation.InitSimulation(*blockRecordCount, *childrenPerBlock, *nodeCount, *subscriberCount, *iterations, *verboseMode)
-	simulation.RunSimulation()
+	if err := simulation.RunSimulation(); err != nil {
+		fmt.Printf("\nSimulation Failed with Error: %s\n", err.Error())
+		simulation.PrintAllNodes()
+		os.Exit(1)
+	}
 }

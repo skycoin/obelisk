@@ -51,7 +51,7 @@ func (sim *Simulation) AdvanceTicks() {
 	sim.Ticks++
 }
 
-func (sim *Simulation) RunSimulation() {
+func (sim *Simulation) RunSimulation() error {
 
 	// Printing before simulation
 	fmt.Printf("\n\n\n#begin Simulation Initial State:\n")
@@ -70,6 +70,10 @@ func (sim *Simulation) RunSimulation() {
 
 		node.UpdateNodeState()
 
+		if err := node.ValidateNodeState(); err != nil {
+			return fmt.Errorf("Node State Validation failed for node-id:%d err:%s", node.id, err.Error())
+		}
+
 		if sim.VerboseMode {
 			fmt.Printf("\n\nAfter Update:\n")
 			node.PrintNodeDetails()
@@ -82,6 +86,8 @@ func (sim *Simulation) RunSimulation() {
 	fmt.Printf("\n\n\n#begin Simulation Final State:\n")
 	sim.PrintAllNodes()
 	fmt.Printf("\n#end Simulation Final State\n")
+
+	return nil
 }
 
 func (sim *Simulation) PrintAllNodes() {

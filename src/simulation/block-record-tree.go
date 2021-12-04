@@ -4,10 +4,6 @@ import (
 	"fmt"
 )
 
-// import (
-// 	"github.com/skycoin/skycoin/src/cipher"
-// )
-
 type BlockRecordTree struct {
 	Root *BlockRecord
 }

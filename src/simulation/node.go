@@ -10,8 +10,8 @@ import (
 )
 
 type Node struct {
-	id            int
-	pubKey        cipher.PubKey
+	id            int                                   // id of the node
+	pubKey        cipher.PubKey                         // Node's public key
 	seqNo         int                                   // Node's sequence number tracking the number of updates done on the node
 	subscriptions []*Node                               // List of Nodes subscribed by the current Node
 	state         map[cipher.SHA256]*NodeStateBlockMeta // A mapping from BlockRecord Hash to current Node's separate copy of NodeStateBlockMeta
@@ -27,16 +27,16 @@ func NewRandomNode(id int) *Node {
 	return node
 }
 
-func (n *Node) InitializeNode(brt *BlockRecordTree, nodes []*Node, numberOfSubcribers int) {
-	n.InitializeRandomNodeSubcribers(nodes, numberOfSubcribers)
+func (n *Node) InitializeNode(brt *BlockRecordTree, nodes []*Node, numberOfSubscribers int) {
+	n.InitializeRandomNodeSubcribers(nodes, numberOfSubscribers)
 	n.InitializeNodeState(brt)
 }
 
-func (n *Node) InitializeRandomNodeSubcribers(nodes []*Node, numberOfSubcribers int) {
+func (n *Node) InitializeRandomNodeSubcribers(nodes []*Node, numberOfSubscribers int) {
 
 	reuseCheckMap := map[int]bool{}
 
-	for len(n.subscriptions) < numberOfSubcribers {
+	for len(n.subscriptions) < numberOfSubscribers {
 		subscriberIndex := rand.Intn(len(nodes))
 
 		if _, ok := reuseCheckMap[subscriberIndex]; !ok && n != nodes[subscriberIndex] {

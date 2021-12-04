@@ -19,13 +19,3 @@ func NewRandomBlockRecord() *BlockRecord {
 	blockRecord.children = []*BlockRecord{}
 	return blockRecord
 }
-
-func NewRandomChildBlockRecord(parent *BlockRecord) *BlockRecord {
-
-	blockRecord := &BlockRecord{}
-	blockRecord.hash = GetRandomSHA256()
-	blockRecord.seqNo = 0
-	blockRecord.parent = parent
-	blockRecord.children = []*BlockRecord{}
-	return blockRecord
-}
