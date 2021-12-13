@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"sort"
 
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -147,20 +146,16 @@ func (n *Node) PrintNodeDetails() {
 	fmt.Printf("Subscriptions:%v\n", subscriptionIds)
 	fmt.Println("State [Format: blockHash | parentHash | seqNo | ticks | weight]:")
 
-	// Getting sorted states in the descending order of the weights
-	sortedStates := []*NodeStateBlockMeta{}
-	for _, blockStateMeta := range n.state {
-		sortedStates = append(sortedStates, blockStateMeta)
-	}
-	sort.Slice(sortedStates, func(i, j int) bool { return sortedStates[i].weight > sortedStates[j].weight })
-
-	for _, blockStateMeta := range sortedStates {
+	// Note State Blocks will be printed in the order Breadth first search tree traversal
+	for _, blockRecord := range GetSimulation().RootBlockTree.GetAllBlockRecords() {
 		var parentHash cipher.SHA256
-		if blockStateMeta.blockRecord.parent != nil {
-			parentHash = blockStateMeta.blockRecord.parent.hash
+		if blockRecord.parent != nil {
+			parentHash = blockRecord.parent.hash
 		}
-		fmt.Printf("%v | %v | %d | %d | %.2f\n", blockStateMeta.blockRecord.hash, parentHash, blockStateMeta.seqNo, blockStateMeta.ticks, blockStateMeta.weight)
+		fmt.Printf("%v | %v | %d | %d | %.2f\n", blockRecord.hash, parentHash, 
+		n.state[blockRecord.hash].seqNo, n.state[blockRecord.hash].ticks, n.state[blockRecord.hash].weight)
 	}
+
 }
 
 func (n *Node) AdjustWeightsTowardsConsensus(root *BlockRecord) {
