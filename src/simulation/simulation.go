@@ -58,6 +58,8 @@ func (sim *Simulation) RunSimulation() error {
 	sim.PrintAllNodes()
 	fmt.Printf("\n#end Simulation Initial State\n")
 
+	convergenceAchievedIteration := -1;
+
 	for it := 0; it < sim.Iterations; it++ {
 
 		node := sim.Nodes[rand.Intn(len(sim.Nodes))]
@@ -71,12 +73,17 @@ func (sim *Simulation) RunSimulation() error {
 		node.UpdateNodeState()
 
 		if err := node.ValidateNodeState(); err != nil {
-			return fmt.Errorf("Node State Validation failed for node-id:%d err:%s", node.id, err.Error())
+			return fmt.Errorf("Node State Validation failed for node-id:%d Iteration:%d err:%s", node.id, it, err.Error());
 		}
 
 		if sim.VerboseMode {
-			fmt.Printf("\n\nAfter Update:\n")
+			fmt.Printf("\n\nAfter Update:\n");
 			node.PrintNodeDetails()
+		}
+
+		if sim.CheckConvergence() {
+			convergenceAchievedIteration = it;
+			break;
 		}
 	}
 
@@ -87,6 +94,10 @@ func (sim *Simulation) RunSimulation() error {
 	sim.PrintAllNodes()
 	fmt.Printf("\n#end Simulation Final State\n")
 
+	if(convergenceAchievedIteration != -1) {
+		fmt.Printf("\nIteration %d: Convergence Achieved!!!", convergenceAchievedIteration)
+	}
+
 	return nil
 }
 
@@ -96,4 +107,28 @@ func (sim *Simulation) PrintAllNodes() {
 		fmt.Printf("\n")
 		node.PrintNodeDetails()
 	}
+}
+
+func (sim *Simulation) CheckConvergence() bool {
+
+	allBlocks := sim.RootBlockTree.GetAllBlockRecords();
+
+	for _, block := range allBlocks {
+
+		firstWeight := sim.Nodes[0].state[block.hash].weight;		
+		
+		// Verify that for all nodes the weight of the block is same
+		for _, node := range sim.Nodes {
+			if(node.state[block.hash].weight != firstWeight) {
+				return false;
+			}
+		}
+
+		// verify that the weight value is either 0.0 or 1.0
+		if  (firstWeight != 0.0 && firstWeight != 1.0) {
+			return false;
+		}
+	} 
+
+	return true;
 }
