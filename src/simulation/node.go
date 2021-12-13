@@ -100,7 +100,6 @@ func (n *Node) UpdateNodeState() {
 
 	// Adjust weights towards consensus
 	n.AdjustWeightsTowardsConsensus(GetSimulation().RootBlockTree.Root);
-	n.PrintNodeDetails();
 }
 
 func (n *Node) GetMaxSubscribersSeqNo(hash cipher.SHA256) int {
