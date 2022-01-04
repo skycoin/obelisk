@@ -5,12 +5,17 @@ import (
 	"math/rand"
 )
 
+const DEFAULT_NODE_INIT_POLICY = NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY;
+
 type Simulation struct {
-	VerboseMode   bool
-	Iterations    int
-	Ticks         int
-	Nodes         []*Node
-	RootBlockTree *BlockRecordTree
+	VerboseMode   	bool
+	RootBlockTree 	*BlockRecordTree
+	Iterations    	int
+	Ticks         	int
+	NodeInitPolicy  string
+	NodeGridMap   	*NodeGridMap
+	Nodes         	[]*Node
+	CommunicationsDelayMatrix *CommunicationsDelayMatrix
 }
 
 var simulation *Simulation
@@ -24,6 +29,7 @@ func GetSimulation() *Simulation {
 
 func (sim *Simulation) InitSimulation(totalRootBlockTreeNodes int, totalRootBlockTreeChildrenPerNode int, numberOfNodes int,
 	numberOfSubscribers int, iterations int, verboseMode bool) error {
+
 	if rootBlockTree, err := NewRandomBlockRecordTree(totalRootBlockTreeNodes, totalRootBlockTreeChildrenPerNode); err != nil {
 		return err
 	} else {
@@ -36,8 +42,15 @@ func (sim *Simulation) InitSimulation(totalRootBlockTreeNodes int, totalRootBloc
 		sim.Nodes = append(sim.Nodes, node)
 	}
 
+	sim.CommunicationsDelayMatrix = &CommunicationsDelayMatrix{}
+	sim.CommunicationsDelayMatrix.InitializeCommuncationsDelayMatrix(sim.Nodes);
+
+	sim.NodeGridMap = &NodeGridMap{};
+	sim.NodeGridMap.InitializeNodeGridMap(sim.Nodes);
+	sim.NodeInitPolicy = DEFAULT_NODE_INIT_POLICY;
+
 	for _, node := range sim.Nodes {
-		node.InitializeNode(sim.RootBlockTree, sim.Nodes, numberOfSubscribers)
+		node.InitializeNode(sim, numberOfSubscribers)
 	}
 
 	sim.Ticks = 0
