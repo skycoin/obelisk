@@ -24,7 +24,7 @@ func main() {
 
 	// Required Arguments
 	nodeCount := flag.Int("nodes", DEFAULT_NODES, fmt.Sprintf("[Required] Number of nodes to consider for simulation. Min Value: %d", MIN_NODES))
-	subscriberCount := flag.Int("subcribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than number of nodes. Min Value: %d", MIN_SUBSCRIBERS))
+	subscriberCount := flag.Int("subscribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than number of nodes. Min Value: %d", MIN_SUBSCRIBERS))
 
 	// Optional Arguments
 	showHelp := flag.Bool("help", false, "Show Help")
