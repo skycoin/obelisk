@@ -76,10 +76,11 @@ func (n *Node) initializeNodeSubscribersViaAnnualRing(nodeGrid *NodeGrid, nodes 
 		r2 := radius + (d / 2);  
 		for i := 0; i < gridLength; i++ {
 			for j := 0; j < gridLength; j++ { 
-				if(len(subscribers) < numberOfSubscribers && nodeGrid.getValue(i,j) != nil) {
+				possibleSubscriber := nodeGrid.getValue(i,j);
+				if(len(subscribers) < numberOfSubscribers && possibleSubscriber != nil && !checkIfExists(possibleSubscriber, subscribers)) {
 					normDistance := math.Sqrt(float64((i * i) + (j * j)));
 					if((normDistance >= r1 && normDistance <= r2)) {
-						subscribers = append(subscribers, nodeGrid.getValue(i,j));
+						subscribers = append(subscribers, possibleSubscriber);
 					}
 				}
 			}
@@ -87,6 +88,21 @@ func (n *Node) initializeNodeSubscribersViaAnnualRing(nodeGrid *NodeGrid, nodes 
 	}
 
 	n.subscriptions = subscribers;
+}
+
+func checkIfExists(possibleSubscriber *Node, subscribers []*Node) bool {
+
+	if(possibleSubscriber == nil || len(subscribers) <= 0) {
+		return false;
+	}
+
+	for _, subscriber := range subscribers {
+		if(possibleSubscriber == subscriber) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 // InitializeNodeState: Initialize a node's state by creating a block record tree and assigning weights 
