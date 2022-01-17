@@ -2,10 +2,12 @@ package main
 
 import "math/rand"
 
+// NodeGrid: A Grid of nodes showing their distances to a particular node
 type NodeGrid struct {
 	grid [][]*Node
 }
 
+// InitializeNodeGrid: Initializes NodeGrid for a given nodes and places the rest of the nodes randomly on the grid
 func (ng *NodeGrid) InitializeNodeGrid(initNode *Node, nodes []*Node) {
 
 	ng.grid = [][]*Node{};

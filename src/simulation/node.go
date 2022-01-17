@@ -8,22 +8,22 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-// The rate at which the nodes should approach the consensus
 const CONSENSUS_APPROACH_FACTOR = 0.1
 const WEIGHT_INIT_FACTOR = 0.01
 const NODE_INIT_RANDOM_SUBSCRIPTION_POLICY = "NODE_INIT_RANDOM_SUBSCRIPTION_POLICY"
 const NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY = "NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY"
 
 type Node struct {
-	id            int                                   // id of the node
-	pubKey        cipher.PubKey                         // Node's public key
-	seqNo         int                                   // Node's sequence number tracking the number of updates done on the node
-	subscriptions []*Node                               // List of Nodes subscribed by the current Node
-	state         map[cipher.SHA256]*NodeStateBlockMeta // A mapping from BlockRecord Hash to current Node's separate copy of NodeStateBlockMeta
+	id            int                                   
+	pubKey        cipher.PubKey                         
+	seqNo         int                                   
+	subscriptions []*Node                               
+	state         map[cipher.SHA256]*NodeStateBlockMeta 
 	nodeMessagesReceived []*NodeMessage
 	nodeMessageQueue  *NodeMessageQueue
 }
 
+// NewRandomNode: Create a new random Node with a random public key
 func NewRandomNode(id int) *Node {
 	node := &Node{id: id}
 	node.pubKey = GetRandomPubKey()
@@ -35,20 +35,20 @@ func NewRandomNode(id int) *Node {
 	return node
 }
 
+// InitializeNode: Initialize a node based on a provided subscriber selection policy
 func (n *Node) InitializeNode(sim *Simulation, numberOfSubscribers int) {
 
 	switch sim.NodeInitPolicy {
 		case NODE_INIT_RANDOM_SUBSCRIPTION_POLICY:
-			n.InitializeRandomNodeSubcribers(sim.Nodes, numberOfSubscribers)
-			break;
+			n.initializeRandomNodeSubcribers(sim.Nodes, numberOfSubscribers);
 		case NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY:
-			n.InitializeNodeSubscribersViaAnnualRing(sim.NodeGridMap.gridMap[n.pubKey], sim.Nodes, numberOfSubscribers)
-			break;
+			n.initializeNodeSubscribersViaAnnualRing(sim.NodeGridMap.gridMap[n.pubKey], sim.Nodes, numberOfSubscribers);
 	}
 	n.InitializeNodeState(sim.RootBlockTree);
 }
 
-func (n *Node) InitializeRandomNodeSubcribers(nodes []*Node, numberOfSubscribers int) {
+// Initializes a node's subscribers by randomly choosing subscribers from the overall nodes available
+func (n *Node) initializeRandomNodeSubcribers(nodes []*Node, numberOfSubscribers int) {
 
 	reuseCheckMap := map[int]bool{}
 
@@ -62,7 +62,8 @@ func (n *Node) InitializeRandomNodeSubcribers(nodes []*Node, numberOfSubscribers
 	}
 }
 
-func (n *Node) InitializeNodeSubscribersViaAnnualRing(nodeGrid *NodeGrid, nodes []*Node, numberOfSubscribers int) {
+// Initializes a node's subscribers via Annual Ring Algorithm using Node Grids
+func (n *Node) initializeNodeSubscribersViaAnnualRing(nodeGrid *NodeGrid, nodes []*Node, numberOfSubscribers int) {
 	gridLength := nodeGrid.getLength()
 	radius := float64(gridLength);
 	ringWidthRatio := 0.0;
@@ -88,6 +89,7 @@ func (n *Node) InitializeNodeSubscribersViaAnnualRing(nodeGrid *NodeGrid, nodes 
 	n.subscriptions = subscribers;
 }
 
+// InitializeNodeState: Initialize a node's state by creating a block record tree and assigning weights 
 func (n *Node) InitializeNodeState(brt *BlockRecordTree) {
 	blockRecords := brt.GetAllBlockRecords()
 
@@ -95,7 +97,7 @@ func (n *Node) InitializeNodeState(brt *BlockRecordTree) {
 		n.state[blockRecord.hash] = NewNodeStateBlockMeta(blockRecord)
 	}
 
-	n.SetWeight(1.0, brt.Root);
+	n.setWeight(1.0, brt.Root);
 
 }
 
@@ -107,6 +109,7 @@ func getRandomSignMultiplier() float64 {
 	return multiplier;
 }
 
+// ValidateNodeState: Validate a node's state by checking that each parent block's weight is equal to the sum of the weights of the children 
 func (n *Node) ValidateNodeState() error {
 	for _, blockStateMeta := range n.state {
 		if len(blockStateMeta.blockRecord.children) > 0 {
@@ -125,30 +128,32 @@ func (n *Node) ValidateNodeState() error {
 	return nil
 }
 
+// UpdateNodeState: 
+// 1) Receive Messages available in the current tick 
+// 2) Compute weights of a node's state from it's subcribers
+// 3) Send messages to subscribers
 func (n *Node) UpdateNodeState() {
 	sim := GetSimulation()
 	sim.AdvanceTicks()
 	n.seqNo++
-
-	// Receiving Messages
+	
 	n.nodeMessagesReceived = append(n.nodeMessagesReceived, n.nodeMessageQueue.Pop(GetSimulation().Ticks)...);
 
 	for _, blockStateMeta := range n.state {
-		blockStateMeta.seqNo = n.GetMaxSubscribersSeqNo(blockStateMeta.blockRecord.hash)
-		n.state[blockStateMeta.blockRecord.hash].weight = n.CalculateNewBlockStateMetaWeight(blockStateMeta.blockRecord);
+		blockStateMeta.seqNo = n.getMaxSubscribersSeqNo(blockStateMeta.blockRecord.hash)
+		n.state[blockStateMeta.blockRecord.hash].weight = n.calculateNewBlockStateMetaWeight(blockStateMeta.blockRecord);
 		blockStateMeta.ticks = sim.Ticks
 	}
+	
+	n.adjustWeightsTowardsConsensus(sim.RootBlockTree.Root);
 
-	// Adjust weights towards consensus
-	n.AdjustWeightsTowardsConsensus(sim.RootBlockTree.Root);
-
-	// Sending Messages to subscribers
 	for _, subscription := range n.subscriptions {
-		subscription.SendMessage(n, sim.Ticks+sim.CommunicationsDelayMatrix.matrix[n.pubKey][subscription.pubKey], fmt.Sprintf("Hello from Node %d to Node %d", n.id, subscription.id));
+		subscription.sendMessage(n, sim.Ticks+sim.CommunicationsDelayMatrix.matrix[n.pubKey][subscription.pubKey], fmt.Sprintf("Hello from Node %d to Node %d", n.id, subscription.id));
 	}
 }
 
-func (n *Node) GetMaxSubscribersSeqNo(hash cipher.SHA256) int {
+// get the max sequence number among all subscribers of the node for a particular block record hash
+func (n *Node) getMaxSubscribersSeqNo(hash cipher.SHA256) int {
 	var maxSeqNo int = 0
 
 	for _, subscription := range n.subscriptions {
@@ -160,7 +165,8 @@ func (n *Node) GetMaxSubscribersSeqNo(hash cipher.SHA256) int {
 	return maxSeqNo
 }
 
-func (n *Node) CalculateNewBlockStateMetaWeight(blockRecord *BlockRecord) float64 {
+// calculate a node's weight for a particular block record by averaging the weights of the same block across all subcribers
+func (n *Node) calculateNewBlockStateMetaWeight(blockRecord *BlockRecord) float64 {
 
 	totalWeight := 0.0
 	subscriberBlockCount := 0.0
@@ -181,6 +187,7 @@ func (n *Node) CalculateNewBlockStateMetaWeight(blockRecord *BlockRecord) float6
 	return subscriberBlockWeightAvg;
 }
 
+// PrintNodeDetails: Prints a node's details (id, seqNo, PubKey, Subscriptions, Messages Received, State) 
 func (n *Node) PrintNodeDetails() {
 	subscriptionIds := []int{}
 
@@ -199,8 +206,7 @@ func (n *Node) PrintNodeDetails() {
 	}
 
 	fmt.Println("State [Format: blockHash | parentHash | seqNo | ticks | weight]:")
-
-	// Note State Blocks will be printed in the order Breadth first search tree traversal
+	
 	for _, blockRecord := range GetSimulation().RootBlockTree.GetAllBlockRecords() {
 		var parentHash cipher.SHA256
 		if blockRecord.parent != nil {
@@ -212,7 +218,8 @@ func (n *Node) PrintNodeDetails() {
 
 }
 
-func (n *Node) AdjustWeightsTowardsConsensus(root *BlockRecord) {
+// adjust a node's weight for it to approach a consensus
+func (n *Node) adjustWeightsTowardsConsensus(root *BlockRecord) {
 	totalWeight := n.state[root.hash].weight;
 	runningWeight := totalWeight
 
@@ -233,33 +240,34 @@ func (n *Node) AdjustWeightsTowardsConsensus(root *BlockRecord) {
 		}
 
 		runningWeight -= n.state[child.hash].weight;
-		n.AdjustWeightsTowardsConsensus(child);
+		n.adjustWeightsTowardsConsensus(child);
 	}
 }
 
-func (n *Node) SetWeight(newWeight float64, blockRecord *BlockRecord) {
+// set node's weight for a particular block record
+func (n *Node) setWeight(newWeight float64, blockRecord *BlockRecord) {
 
 	n.state[blockRecord.hash].weight = newWeight;
 
-	// Re-assign children weight
 	runningWeight := newWeight;
 	avgWeight := newWeight / float64(len(blockRecord.children));
 
 	for _, child := range blockRecord.children {
 		if(child == blockRecord.children[len(blockRecord.children)-1]) {
-			n.SetWeight(runningWeight, child);
+			n.setWeight(runningWeight, child);
 
 		} else if (runningWeight > avgWeight) {
 			assignWeight := avgWeight + getRandomSignMultiplier() * WEIGHT_INIT_FACTOR
-			n.SetWeight(assignWeight, child);
+			n.setWeight(assignWeight, child);
 			runningWeight -= assignWeight;
 		} else {
-			n.SetWeight(runningWeight, child)
+			n.setWeight(runningWeight, child)
 		}
 	}
 }
 
-func (n *Node) SendMessage(from *Node, arrivalTimeTick int, message string) {
+// push a message toa node's message queue while settings the desired arrival time
+func (n *Node) sendMessage(from *Node, arrivalTimeTick int, message string) {
 	n.nodeMessageQueue.Push(&NodeMessage{
 		arrivalTimeTick: arrivalTimeTick,
 		sentTimeTick: GetSimulation().Ticks,

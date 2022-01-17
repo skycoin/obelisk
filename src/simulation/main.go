@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 const DEFAULT_NODES = 3
@@ -29,7 +30,7 @@ func main() {
 	// Optional Arguments
 	showHelp := flag.Bool("help", false, "Show Help")
 	verboseMode := flag.Bool("verbose", false, "Run in Verbose Mode")
-	defaultSeed := int64(1); // time.Now().UTC().UnixNano();
+	defaultSeed := time.Now().UTC().UnixNano();
 	seed := flag.Int64("seed", defaultSeed, "Seed to use while running the simulation. Must be a valid integer > 0")
 	iterations := flag.Int("iterations", DEFAULT_ITERATIONS, fmt.Sprintf("Number of iterations to run this simulation. Min Value: %d", MIN_ITERATIONS))
 	blockRecordCount := flag.Int("block-record-count", DEFAULT_BLOCK_TREE_BLOCK_RECORD_COUNT, fmt.Sprintf("Total Number of Blocks in Root Block Tree. Min Value: %d", MIN_BLOCK_TREE_BLOCK_RECORD_COUNT))

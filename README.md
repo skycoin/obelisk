@@ -30,21 +30,34 @@ This Script performs a simulation of the obelisk consensus algorithm.
   * [Methods](#methods-1)
     + [GetAllBlockRecords](#getallblockrecords)
       - [Signature](#signature-10)
-- [Struct BlockRecord](#struct-blockrecord)
+- [Struct CommunicationsDelayMatrix](#struct-communicationsdelaymatrix)
   * [Data](#data-2)
-- [Struct Node](#struct-node)
-  * [Data](#data-3)
   * [Methods](#methods-2)
-    + [InitializeNode](#initializenode)
+    + [InitializeCommunicationsDelayMatrix](#initializecommunicationsdelaymatrix)
       - [Signature](#signature-11)
-    + [ValidateNodeState](#validatenodestate)
+- [Struct NodeGridMap](#struct-nodegridmap)
+  * [Data](#data-3)
+  * [Methods](#methods-3)
+    + [InitializeNodeGridMap](#initializenodegridmap)
       - [Signature](#signature-12)
-    + [UpdateNodeState](#updatenodestate)
-      - [Signature](#signature-13)
-- [Struct NodeBlockMeta](#struct-nodeblockmeta)
+- [Struct NodeGrid](#struct-nodegrid)
   * [Data](#data-4)
+  * [Methods](#methods-4)
+    + [InitializeNodeGrid](#initializenodegrid)
+      - [Signature](#signature-13)
+- [Struct Node](#struct-node)
+  * [Data](#data-5)
+  * [Methods](#methods-5)
+    + [InitializeNode](#initializenode)
+      - [Signature](#signature-14)
+    + [ValidateNodeState](#validatenodestate)
+      - [Signature](#signature-15)
+    + [UpdateNodeState](#updatenodestate)
+      - [Signature](#signature-16)
+- [Struct NodeBlockMeta](#struct-nodeblockmeta)
+  * [Data](#data-6)
 - [Overall Flow](#overall-flow)
-- [Dry Run](#dry-run) 
+- [Dry Run](#dry-run)
 - [How to build / run?](#how-to-build---run-)
   * [Sample Run](#sample-run)
   * [Sample Output](#sample-output)
@@ -152,16 +165,55 @@ Returns all blocks of the root block tree as a list
 func (brt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {}
 ```
 
-## Struct BlockRecord
-The BlockRecord struct will hold data to simulate a Block Record
+## Struct CommunicationsDelayMatrix
+The CommunicationsDelayMatrix struct tracks the tick delay when sending messages between two nodes
 ### Data
 ```
-type BlockRecord struct {
-	hash     cipher.SHA256  // Hash of the Block
-	seqNo    int            // SeqNo of the block
-	parent   *BlockRecord   // Pointer to the parent of the block record
-	children []*BlockRecord // List of children of the block record
+type CommunicationsDelayMatrix struct {
+	matrix map[cipher.PubKey]map[cipher.PubKey]int
 }
+```
+### Methods
+Following are the methods supported by the CommunicationsDelayMatrix Struct required for this simulation
+#### InitializeCommunicationsDelayMatrix
+Initializes the CommunicationsDelayMatrix with random values (Right now all of them are set to 1s)
+##### Signature
+```
+func (cdm *CommunicationsDelayMatrix) InitializeCommunicationsDelayMatrix(nodes []*Node) {}
+```
+
+## Struct NodeGridMap
+The NodeGridMap struct Keeps a mapping for Each node's PubKey to it's NodeGrid
+### Data
+```
+type NodeGridMap struct {
+	gridMap map[cipher.PubKey]*NodeGrid
+}
+```
+### Methods
+Following are the methods supported by the NodeGridMap Struct required for this simulation
+#### InitializeNodeGridMap
+Initializes the NodeGrid for each node by randomly placing other nodes on the grid
+##### Signature
+```
+func (ngm *NodeGridMap) InitializeNodeGridMap(nodes []*Node) {}
+```
+
+## Struct NodeGrid
+The NodeGrid struct represents a grid of nodes showing their distances to a particular node
+### Data
+```
+type NodeGrid struct {
+	grid [][]*Node
+}
+```
+### Methods
+Following are the methods supported by the NodeGrid Struct required for this simulation
+#### InitializeNodeGrid
+Initializes the NodeGrid for a given node by randomly placing other nodes on the grid
+##### Signature
+```
+func (ng *NodeGrid) InitializeNodeGrid(initNode *Node, nodes []*Node) {}
 ```
 ## Struct Node
 The Node struct holds the Node information for the running simulation
@@ -181,7 +233,9 @@ Following are the methods supported by the Node Struct required for this simulat
 Initializes the current node's state:
 - Iterate through the global block record tree held by Simulation struct 
 - Foreach of the block record adds it to the state and then initialize the weight = (weight of parent) / (number of children of parent)
-- Adds number of subscribers to the node in a random fashion driven by seed
+- Adds specified number of subscribers to each node based on the subscription assignment policy. Following two policies are supported:
+  - NODE_INIT_RANDOM_SUBSCRIPTION_POLICY (by randomly choosing subscribers from the overall nodes available)
+  - NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY *[Currently Active]* (via Annual Ring Algorithm using Node Grids)
 ##### Signature
 ```
 func (n *Node) InitializeNode(brt *BlockRecordTree, nodes []*Node, numberOfSubscribers int) {}

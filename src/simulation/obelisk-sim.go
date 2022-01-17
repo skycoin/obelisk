@@ -43,7 +43,7 @@ func (sim *Simulation) InitSimulation(totalRootBlockTreeNodes int, totalRootBloc
 	}
 
 	sim.CommunicationsDelayMatrix = &CommunicationsDelayMatrix{}
-	sim.CommunicationsDelayMatrix.InitializeCommuncationsDelayMatrix(sim.Nodes);
+	sim.CommunicationsDelayMatrix.InitializeCommunicationsDelayMatrix(sim.Nodes);
 
 	sim.NodeGridMap = &NodeGridMap{};
 	sim.NodeGridMap.InitializeNodeGridMap(sim.Nodes);
@@ -94,7 +94,7 @@ func (sim *Simulation) RunSimulation() error {
 			node.PrintNodeDetails()
 		}
 
-		if sim.CheckConvergence() {
+		if sim.checkConvergence() {
 			convergenceAchievedIteration = it;
 			break;
 		}
@@ -122,7 +122,7 @@ func (sim *Simulation) PrintAllNodes() {
 	}
 }
 
-func (sim *Simulation) CheckConvergence() bool {
+func (sim *Simulation) checkConvergence() bool {
 
 	allBlocks := sim.RootBlockTree.GetAllBlockRecords();
 

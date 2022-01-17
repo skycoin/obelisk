@@ -5,12 +5,13 @@ import (
 )
 
 type BlockRecord struct {
-	hash     cipher.SHA256  // Hash of the Block
-	seqNo    int            // SeqNo of the block
-	parent   *BlockRecord   // Pointer to the parent of the block record
-	children []*BlockRecord // List of children of the block record
+	hash     cipher.SHA256  
+	seqNo    int            
+	parent   *BlockRecord   
+	children []*BlockRecord 
 }
 
+// NewRandomBlockRecord: Create a new Block Record with a random hash
 func NewRandomBlockRecord() *BlockRecord {
 	blockRecord := &BlockRecord{}
 	blockRecord.hash = GetRandomSHA256()

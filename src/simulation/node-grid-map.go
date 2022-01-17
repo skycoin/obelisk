@@ -4,6 +4,7 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// NodeGridMap: Keeps a mapping for Each node's PubKey to it's NodeGrid
 type NodeGridMap struct {
 	gridMap map[cipher.PubKey]*NodeGrid
 }
