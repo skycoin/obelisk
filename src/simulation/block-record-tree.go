@@ -16,12 +16,9 @@ func (brt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {
 	queue = append(queue, brt.Root)
 
 	for len(queue) > 0 {
-		blockRecordArray = append(blockRecordArray, queue[0])
-		for _, child := range queue[0].children {
-			queue = append(queue, child)
-		}
-
-		queue = queue[1:]
+		blockRecordArray = append(blockRecordArray, queue[0]);
+		queue = append(queue, queue[0].children...);
+		queue = queue[1:];
 	}
 
 	return blockRecordArray
