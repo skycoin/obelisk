@@ -8,25 +8,23 @@ type BlockRecordTree struct {
 	Root *BlockRecord
 }
 
+// GetRandomSHA256: Returns all the block records in the tree in the order of breadth first traversal
 func (brt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {
 	blockRecordArray := []*BlockRecord{}
 
-	// queue is needed for breadth first tree traversal
 	queue := []*BlockRecord{}
 	queue = append(queue, brt.Root)
 
 	for len(queue) > 0 {
-		blockRecordArray = append(blockRecordArray, queue[0])
-		for _, child := range queue[0].children {
-			queue = append(queue, child)
-		}
-
-		queue = queue[1:]
+		blockRecordArray = append(blockRecordArray, queue[0]);
+		queue = append(queue, queue[0].children...);
+		queue = queue[1:];
 	}
 
 	return blockRecordArray
 }
 
+// NewRandomBlockRecordTree: Creates a new random block tree given total required blocks in the tree and max children per node in the tree
 func NewRandomBlockRecordTree(totalBlocks int, childrenPerNode int) (*BlockRecordTree, error) {
 	if totalBlocks < 1 {
 		return nil, fmt.Errorf("totalBlocks must be greater than 0")
@@ -39,7 +37,6 @@ func NewRandomBlockRecordTree(totalBlocks int, childrenPerNode int) (*BlockRecor
 	blockRecordTree := &BlockRecordTree{}
 	blockRecordTree.Root = NewRandomBlockRecord()
 
-	// queue is needed for breadth first tree traversal
 	queue := []*BlockRecord{}
 	queue = append(queue, blockRecordTree.Root)
 	totalBlocks--

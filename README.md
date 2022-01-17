@@ -30,21 +30,34 @@ This Script performs a simulation of the obelisk consensus algorithm.
   * [Methods](#methods-1)
     + [GetAllBlockRecords](#getallblockrecords)
       - [Signature](#signature-10)
-- [Struct BlockRecord](#struct-blockrecord)
+- [Struct CommunicationsDelayMatrix](#struct-communicationsdelaymatrix)
   * [Data](#data-2)
-- [Struct Node](#struct-node)
-  * [Data](#data-3)
   * [Methods](#methods-2)
-    + [InitializeNode](#initializenode)
+    + [InitializeCommunicationsDelayMatrix](#initializecommunicationsdelaymatrix)
       - [Signature](#signature-11)
-    + [ValidateNodeState](#validatenodestate)
+- [Struct NodeGridMap](#struct-nodegridmap)
+  * [Data](#data-3)
+  * [Methods](#methods-3)
+    + [InitializeNodeGridMap](#initializenodegridmap)
       - [Signature](#signature-12)
-    + [UpdateNodeState](#updatenodestate)
-      - [Signature](#signature-13)
-- [Struct NodeBlockMeta](#struct-nodeblockmeta)
+- [Struct NodeGrid](#struct-nodegrid)
   * [Data](#data-4)
+  * [Methods](#methods-4)
+    + [InitializeNodeGrid](#initializenodegrid)
+      - [Signature](#signature-13)
+- [Struct Node](#struct-node)
+  * [Data](#data-5)
+  * [Methods](#methods-5)
+    + [InitializeNode](#initializenode)
+      - [Signature](#signature-14)
+    + [ValidateNodeState](#validatenodestate)
+      - [Signature](#signature-15)
+    + [UpdateNodeState](#updatenodestate)
+      - [Signature](#signature-16)
+- [Struct NodeBlockMeta](#struct-nodeblockmeta)
+  * [Data](#data-6)
 - [Overall Flow](#overall-flow)
-- [Dry Run](#dry-run) 
+- [Dry Run](#dry-run)
 - [How to build / run?](#how-to-build---run-)
   * [Sample Run](#sample-run)
   * [Sample Output](#sample-output)
@@ -152,16 +165,55 @@ Returns all blocks of the root block tree as a list
 func (brt *BlockRecordTree) GetAllBlockRecords() []*BlockRecord {}
 ```
 
-## Struct BlockRecord
-The BlockRecord struct will hold data to simulate a Block Record
+## Struct CommunicationsDelayMatrix
+The CommunicationsDelayMatrix struct tracks the tick delay when sending messages between two nodes
 ### Data
 ```
-type BlockRecord struct {
-	hash     cipher.SHA256  // Hash of the Block
-	seqNo    int            // SeqNo of the block
-	parent   *BlockRecord   // Pointer to the parent of the block record
-	children []*BlockRecord // List of children of the block record
+type CommunicationsDelayMatrix struct {
+	matrix map[cipher.PubKey]map[cipher.PubKey]int
 }
+```
+### Methods
+Following are the methods supported by the CommunicationsDelayMatrix Struct required for this simulation
+#### InitializeCommunicationsDelayMatrix
+Initializes the CommunicationsDelayMatrix with random values (Right now all of them are set to 1s)
+##### Signature
+```
+func (cdm *CommunicationsDelayMatrix) InitializeCommunicationsDelayMatrix(nodes []*Node) {}
+```
+
+## Struct NodeGridMap
+The NodeGridMap struct Keeps a mapping for Each node's PubKey to it's NodeGrid
+### Data
+```
+type NodeGridMap struct {
+	gridMap map[cipher.PubKey]*NodeGrid
+}
+```
+### Methods
+Following are the methods supported by the NodeGridMap Struct required for this simulation
+#### InitializeNodeGridMap
+Initializes the NodeGrid for each node by randomly placing other nodes on the grid
+##### Signature
+```
+func (ngm *NodeGridMap) InitializeNodeGridMap(nodes []*Node) {}
+```
+
+## Struct NodeGrid
+The NodeGrid struct represents a grid of nodes showing their distances to a particular node
+### Data
+```
+type NodeGrid struct {
+	grid [][]*Node
+}
+```
+### Methods
+Following are the methods supported by the NodeGrid Struct required for this simulation
+#### InitializeNodeGrid
+Initializes the NodeGrid for a given node by randomly placing other nodes on the grid
+##### Signature
+```
+func (ng *NodeGrid) InitializeNodeGrid(initNode *Node, nodes []*Node) {}
 ```
 ## Struct Node
 The Node struct holds the Node information for the running simulation
@@ -181,7 +233,9 @@ Following are the methods supported by the Node Struct required for this simulat
 Initializes the current node's state:
 - Iterate through the global block record tree held by Simulation struct 
 - Foreach of the block record adds it to the state and then initialize the weight = (weight of parent) / (number of children of parent)
-- Adds number of subscribers to the node in a random fashion driven by seed
+- Adds specified number of subscribers to each node based on the subscription assignment policy. Following two policies are supported:
+  - NODE_INIT_RANDOM_SUBSCRIPTION_POLICY (by randomly choosing subscribers from the overall nodes available)
+  - NODE_INIT_RANDOM_ANNUAL_RING_SUBSCRIPTION_POLICY *[Currently Active]* (via Annual Ring Algorithm using Node Grids)
 ##### Signature
 ```
 func (n *Node) InitializeNode(brt *BlockRecordTree, nodes []*Node, numberOfSubscribers int) {}
@@ -322,36 +376,38 @@ The simulation will be run as a command line script
 ### Sample Run
 ```console
 <dir-Path>/obelisk$ go build ./src/simulation
-<dir-Path>/obelisk$ ./simulation -block-record-count 3 -children-per-block 2 -nodes 3 -subcribers 2 -iterations 1000
+<dir-Path>/obelisk$ ./simulation -block-record-count 3 -children-per-block 2 -nodes 3 -subscribers 2 -iterations 1000
 ```
 ### Sample Output
 ```console
 
+$ ./simulation -block-record-count 3 -children-per-block 2 -nodes 3 -subscribers 2 -iterations 1000
+
 #begin Simulation Initial State:
 
 Node (id=1 seqNo=0) Details:
-PubKey:[180 133 196 192 101 210 240 238 186 238 131 109 78 169 31 210 92 6 244 61 173 119 238 38 66 189 195 117 53 37 50 228 59]
-Subscriptions:[3 2]
+PubKey:8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025
+Subscriptions:[2 2]
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.51
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.49
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.49
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.51
 
 Node (id=2 seqNo=0) Details:
-PubKey:[146 164 121 54 187 205 148 113 120 248 228 192 216 122 59 231 3 196 155 225 216 131 160 124 72 135 219 148 78 63 15 241 105]
-Subscriptions:[3 1]
+PubKey:be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a
+Subscriptions:[1 1]
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.51
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.49
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.51
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.49
 
 Node (id=3 seqNo=0) Details:
-PubKey:[28 248 23 47 180 196 85 145 40 35 217 154 84 193 190 168 128 243 25 245 109 162 150 19 153 132 16 19 155 68 106 227 47]
-Subscriptions:[2 1]
+PubKey:469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9
+Subscriptions:[1 1]
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.51
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0 | 0 | 0.49
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 0 | 0 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.49
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0 | 0 | 0.51
 
 #end Simulation Initial State
 
@@ -359,32 +415,66 @@ fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000
 
 #begin Simulation Final State:
 
-Node (id=1 seqNo=8) Details:
-PubKey:[180 133 196 192 101 210 240 238 186 238 131 109 78 169 31 210 92 6 244 61 173 119 238 38 66 189 195 117 53 37 50 228 59]
-Subscriptions:[3 2]
+Node (id=1 seqNo=6) Details:
+PubKey:8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025
+Subscriptions:[2 2]
+Messages Received [Format: from(pubKey) | to(pubKey) | sentTick | arrivedTick | message]:
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 1 | 2 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 1 | 2 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 3 | 4 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 3 | 4 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 4 | 5 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 4 | 5 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 5 | 6 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 5 | 6 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 6 | 7 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 6 | 7 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 8 | 9 | Hello from Node 3 to Node 1
+469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9 | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 8 | 9 | Hello from Node 3 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 9 | 10 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 9 | 10 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 11 | 12 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 11 | 12 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 12 | 13 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 12 | 13 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 13 | 14 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 13 | 14 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 16 | 17 | Hello from Node 2 to Node 1
+be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | 16 | 17 | Hello from Node 2 to Node 1
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 9 | 23 | 1.00
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 9 | 23 | 1.00
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 9 | 23 | 0.00
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 5 | 17 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 5 | 17 | 1.00
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 5 | 17 | 0.00
 
-Node (id=2 seqNo=7) Details:
-PubKey:[146 164 121 54 187 205 148 113 120 248 228 192 216 122 59 231 3 196 155 225 216 131 160 124 72 135 219 148 78 63 15 241 105]
-Subscriptions:[3 1]
+Node (id=2 seqNo=5) Details:
+PubKey:be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a
+Subscriptions:[1 1]
+Messages Received [Format: from(pubKey) | to(pubKey) | sentTick | arrivedTick | message]:
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 2 | 3 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 2 | 3 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 7 | 8 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 7 | 8 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 10 | 11 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 10 | 11 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 14 | 15 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 14 | 15 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 15 | 16 | Hello from Node 1 to Node 2
+8da86849fb1e18e43cb472164538058f74280ac93645731d1f9f3b9989575ba025 | be587209261ee28c951fa22aca128ccc1c7fa68a3f29a3f2b0f67959033383ff7a | 15 | 16 | Hello from Node 1 to Node 2
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 9 | 24 | 1.00
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 9 | 24 | 1.00
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 9 | 24 | 0.00
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 5 | 16 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 5 | 16 | 1.00
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 5 | 16 | 0.00
 
-Node (id=3 seqNo=9) Details:
-PubKey:[28 248 23 47 180 196 85 145 40 35 217 154 84 193 190 168 128 243 25 245 109 162 150 19 153 132 16 19 155 68 106 227 47]
-Subscriptions:[2 1]
+Node (id=3 seqNo=7) Details:
+PubKey:469a59a6ba9dbd86be3cb76ddd7070905650b846e54fdeb4b870c287ed7fe3c4c9
+Subscriptions:[1 1]
 State [Format: blockHash | parentHash | seqNo | ticks | weight]:
-fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 0000000000000000000000000000000000000000000000000000000000000000 | 7 | 22 | 1.00
-19722d7643e4fa884d197907538c91595753a8bced44dd569db2814b1cfb0e0d | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 7 | 22 | 1.00
-3bf0835bfca39af7786e55e3aefd6a9f2abc95a5d9e2ecef54a3cafa50781e67 | fae99589eb0dc2c68982e8c1bc7b5f99ffa704806bc75d76bfbb6302d08c60a6 | 7 | 22 | 0.00
+8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 0000000000000000000000000000000000000000000000000000000000000000 | 6 | 18 | 1.00
+bef619d411d63d1323bfc74c2740d30e4a32e76b2d54e762504c076dfe875a9f | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 6 | 18 | 1.00
+6b58c0b40df27ce0c14f6d9f94b7a78b25b95f5b832e8c7aa312c4993f52acd8 | 8da81b6972bff1a7c4a85f17c2b3cb6e86239c7c41ab3b6dae15491e2139e200 | 6 | 18 | 0.00
 
 #end Simulation Final State
 
-Iteration 23: Convergence Achieved!!!
+Iteration 17: Convergence Achieved!!!
 
 ```

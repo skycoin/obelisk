@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 const DEFAULT_NODES = 3
@@ -24,12 +25,12 @@ func main() {
 
 	// Required Arguments
 	nodeCount := flag.Int("nodes", DEFAULT_NODES, fmt.Sprintf("[Required] Number of nodes to consider for simulation. Min Value: %d", MIN_NODES))
-	subscriberCount := flag.Int("subcribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than number of nodes. Min Value: %d", MIN_SUBSCRIBERS))
+	subscriberCount := flag.Int("subscribers", DEFAULT_SUBSCRIBERS, fmt.Sprintf("[Required] Number of subscribers per node. Must be less than number of nodes. Min Value: %d", MIN_SUBSCRIBERS))
 
 	// Optional Arguments
 	showHelp := flag.Bool("help", false, "Show Help")
 	verboseMode := flag.Bool("verbose", false, "Run in Verbose Mode")
-	defaultSeed := int64(1); // time.Now().UTC().UnixNano();
+	defaultSeed := time.Now().UTC().UnixNano();
 	seed := flag.Int64("seed", defaultSeed, "Seed to use while running the simulation. Must be a valid integer > 0")
 	iterations := flag.Int("iterations", DEFAULT_ITERATIONS, fmt.Sprintf("Number of iterations to run this simulation. Min Value: %d", MIN_ITERATIONS))
 	blockRecordCount := flag.Int("block-record-count", DEFAULT_BLOCK_TREE_BLOCK_RECORD_COUNT, fmt.Sprintf("Total Number of Blocks in Root Block Tree. Min Value: %d", MIN_BLOCK_TREE_BLOCK_RECORD_COUNT))
